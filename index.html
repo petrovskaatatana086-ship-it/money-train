@@ -1,0 +1,361 @@
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Денежный Экспресс 🚂</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Comfortaa', cursive;
+            background: #87CEEB; /* Sky blue */
+            touch-action: manipulation;
+            user-select: none;
+            overflow-x: hidden;
+        }
+
+        .grass {
+            background: linear-gradient(to bottom, #7CFC00 0%, #55a630 100%);
+            height: 200px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            z-index: -1;
+        }
+
+        .rails {
+            height: 20px;
+            background: repeating-linear-gradient(90deg, #5c4033 0, #5c4033 20px, transparent 20px, transparent 60px);
+            border-top: 4px solid #888;
+            border-bottom: 4px solid #888;
+            width: 100%;
+            position: absolute;
+            top: 40px;
+        }
+
+        .train-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 40px;
+            border: 8px solid #E63946;
+            box-shadow: 0 15px 0 rgba(0,0,0,0.1);
+        }
+
+        .steam {
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 40px;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        @keyframes puff {
+            0% { transform: translate(-50%, 0) scale(1); opacity: 0.8; }
+            100% { transform: translate(-50%, -120px) scale(2.5); opacity: 0; }
+        }
+
+        .animate-puff {
+            animation: puff 0.8s ease-out forwards;
+        }
+
+        .vibrate {
+            animation: vibrate-anim 0.2s linear infinite;
+        }
+
+        @keyframes vibrate-anim {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(2deg); }
+            75% { transform: rotate(-2deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        .custom-btn {
+            transition: all 0.2s;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.15);
+        }
+
+        .custom-btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.15);
+        }
+
+        /* Scrollbar styling */
+        .history-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        .history-list::-webkit-scrollbar-thumb {
+            background: #E63946;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center min-h-screen p-4">
+
+    <!-- Header & Train -->
+    <div class="relative mt-8 mb-4 text-center">
+        <div id="steam" class="steam">☁️</div>
+        <div id="train" class="text-9xl cursor-pointer transition-transform hover:scale-110 active:scale-95" onclick="makeHonk()">
+            🚂
+        </div>
+        <h1 class="text-3xl text-white mt-4 drop-shadow-lg text-center">Денежный Экспресс</h1>
+        <p class="text-white/80 text-xs mt-1">Нажми на паровоз, чтобы погудеть!</p>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div class="train-card w-full max-w-md p-6 relative z-10">
+        <div class="text-center mb-8">
+            <p class="text-gray-500 text-lg">В твоем депо:</p>
+            <div id="balance" class="text-6xl font-bold text-slate-800">0 ₽</div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="grid grid-cols-2 gap-4 mb-8">
+            <button onclick="openModal('income')" class="custom-btn bg-emerald-500 hover:bg-emerald-400 text-white rounded-3xl py-6 flex flex-col items-center">
+                <span class="text-3xl mb-1">💰</span>
+                <span>ПРИБЫЛЬ</span>
+            </button>
+            <button onclick="openModal('expense')" class="custom-btn bg-rose-500 hover:bg-rose-400 text-white rounded-3xl py-6 flex flex-col items-center">
+                <span class="text-3xl mb-1">🍭</span>
+                <span>РАСХОДЫ</span>
+            </button>
+        </div>
+
+        <!-- Progress to Goal -->
+        <div class="mb-6">
+            <div class="flex justify-between text-sm mb-1 text-gray-600">
+                <span>Путь к мечте</span>
+                <span id="goal-percent">0%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden border-2 border-slate-300">
+                <div id="goal-bar" class="bg-yellow-400 h-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- History -->
+        <div class="mt-4">
+            <h3 class="text-lg mb-2 text-slate-600 border-b-2 border-dashed border-slate-200 pb-1">Дневник поездок:</h3>
+            <div id="history" class="history-list h-48 overflow-y-auto space-y-2 pr-2">
+                <p class="text-center text-gray-400 mt-4 italic">Пока поездов не было...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Decorative Rails -->
+    <div class="grass">
+        <div class="rails"></div>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-[40px] w-full max-w-sm p-8 border-8 border-yellow-400">
+            <h2 id="modal-title" class="text-2xl text-center mb-6 font-bold">Новый вагон!</h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-gray-500 text-sm mb-1 ml-2 font-bold">Сколько монет?</label>
+                    <input type="number" id="amount-input" inputmode="numeric" class="w-full text-3xl p-4 bg-gray-100 rounded-2xl border-none focus:ring-4 ring-yellow-200 text-center font-bold" placeholder="0">
+                </div>
+                <div>
+                    <label class="block text-gray-500 text-sm mb-1 ml-2 font-bold">Что случилось?</label>
+                    <input type="text" id="note-input" class="w-full p-4 bg-gray-100 rounded-2xl border-none focus:ring-4 ring-yellow-200 text-center" placeholder="Например: Купил мороженое">
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-3 mt-8">
+                <button id="submit-btn" onclick="saveTransaction()" class="custom-btn bg-emerald-500 text-white py-4 rounded-2xl text-xl font-bold">ПОЕХАЛИ!</button>
+                <button onclick="closeModal()" class="text-gray-400 py-2 font-bold">Назад в депо</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Audio Synthesis Engine
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playHonkSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const osc1 = audioCtx.createOscillator();
+            const osc2 = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc1.type = 'sawtooth';
+            osc2.type = 'sawtooth';
+            
+            // Typical train horn frequencies
+            osc1.frequency.setValueAtTime(311.13, audioCtx.currentTime); // Eb4
+            osc2.frequency.setValueAtTime(370.00, audioCtx.currentTime); // Gb4
+
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
+
+            osc1.connect(gain);
+            osc2.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc1.start();
+            osc2.start();
+            osc1.stop(audioCtx.currentTime + 1.2);
+            osc2.stop(audioCtx.currentTime + 1.2);
+        }
+
+        function playClickSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
+
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        // State Management
+        let state = {
+            balance: 0,
+            history: [],
+            savingsGoal: 1000, 
+            modalType: 'income'
+        };
+
+        // Initialize from LocalStorage
+        const savedData = localStorage.getItem('money_express_data');
+        if (savedData) {
+            try {
+                state = JSON.parse(savedData);
+            } catch(e) {
+                console.error("Error loading state", e);
+            }
+        }
+
+        const balanceDisplay = document.getElementById('balance');
+        const historyContainer = document.getElementById('history');
+        const goalBar = document.getElementById('goal-bar');
+        const goalPercent = document.getElementById('goal-percent');
+        const modal = document.getElementById('modal');
+        const train = document.getElementById('train');
+        const submitBtn = document.getElementById('submit-btn');
+
+        function updateUI() {
+            // Update Balance
+            balanceDisplay.innerText = `${state.balance} ₽`;
+            
+            // Update Goal
+            const percent = state.savingsGoal > 0 ? Math.min(Math.round((state.balance / state.savingsGoal) * 100), 100) : 0;
+            goalBar.style.width = `${percent}%`;
+            goalPercent.innerText = `${percent}%`;
+
+            // Update History
+            if (state.history.length === 0) {
+                historyContainer.innerHTML = '<p class="text-center text-gray-400 mt-4 italic">Пока поездов не было...</p>';
+            } else {
+                historyContainer.innerHTML = state.history.map(item => `
+                    <div class="flex items-center justify-between p-3 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                        <div class="flex items-center">
+                            <span class="text-2xl mr-3">${item.type === 'income' ? '📦' : '🛤️'}</span>
+                            <div class="flex flex-col">
+                                <span class="font-bold text-slate-700 leading-tight">${item.note}</span>
+                                <span class="text-xs text-gray-400">${item.date}</span>
+                            </div>
+                        </div>
+                        <span class="font-bold ${item.type === 'income' ? 'text-emerald-500' : 'text-rose-500'}">
+                            ${item.type === 'income' ? '+' : '-'}${item.amount} ₽
+                        </span>
+                    </div>
+                `).reverse().join('');
+            }
+
+            // Save to LocalStorage
+            localStorage.setItem('money_express_data', JSON.stringify(state));
+        }
+
+        function makeHonk() {
+            // Sound effect
+            playHonkSound();
+
+            // Visual feedback
+            const steam = document.getElementById('steam');
+            steam.classList.remove('animate-puff');
+            void steam.offsetWidth; 
+            steam.classList.add('animate-puff');
+
+            train.classList.add('vibrate');
+            setTimeout(() => train.classList.remove('vibrate'), 400);
+
+            if (navigator.vibrate) {
+                navigator.vibrate([100, 50, 100]);
+            }
+        }
+
+        function openModal(type) {
+            playClickSound();
+            state.modalType = type;
+            const title = document.getElementById('modal-title');
+            
+            if (type === 'income') {
+                title.innerText = 'Прибытие золота! 💰';
+                submitBtn.className = 'custom-btn bg-emerald-500 text-white py-4 rounded-2xl text-xl font-bold';
+            } else {
+                title.innerText = 'Отправление поезда! 🍭';
+                submitBtn.className = 'custom-btn bg-rose-500 text-white py-4 rounded-2xl text-xl font-bold';
+            }
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            playClickSound();
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.getElementById('amount-input').value = '';
+            document.getElementById('note-input').value = '';
+        }
+
+        function saveTransaction() {
+            const amountInput = document.getElementById('amount-input');
+            const amount = parseInt(amountInput.value);
+            const noteInput = document.getElementById('note-input');
+            const note = noteInput.value || (state.modalType === 'income' ? 'Подарок' : 'Вкусняшки');
+
+            if (isNaN(amount) || amount <= 0) {
+                alert('Сначала введи число!');
+                return;
+            }
+
+            if (state.modalType === 'income') {
+                state.balance += amount;
+            } else {
+                state.balance -= amount;
+            }
+
+            const now = new Date();
+            const dateStr = `${now.getDate()}.${now.getMonth()+1} в ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+            state.history.push({
+                type: state.modalType,
+                amount: amount,
+                note: note,
+                date: dateStr
+            });
+
+            makeHonk();
+            updateUI();
+            closeModal();
+        }
+
+        // Run on load
+        updateUI();
+    </script>
+</body>
+</html>
