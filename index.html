@@ -9,7 +9,7 @@
     <style>
         body {
             font-family: 'Comfortaa', cursive;
-            background: #87CEEB; /* Sky blue */
+            background: #87CEEB; /* Небесно-голубой */
             touch-action: manipulation;
             user-select: none;
             overflow-x: hidden;
@@ -81,7 +81,6 @@
             box-shadow: 0 2px 0 rgba(0,0,0,0.15);
         }
 
-        /* Scrollbar styling */
         .history-list::-webkit-scrollbar {
             width: 8px;
         }
@@ -89,11 +88,16 @@
             background: #E63946;
             border-radius: 10px;
         }
+        
+        .history-item:hover {
+            background-color: #f8fafc;
+            border-color: #e2e8f0;
+        }
     </style>
 </head>
 <body class="flex flex-col items-center min-h-screen p-4">
 
-    <!-- Header & Train -->
+    <!-- Заголовок и Паровоз -->
     <div class="relative mt-8 mb-4 text-center">
         <div id="steam" class="steam">☁️</div>
         <div id="train" class="text-9xl cursor-pointer transition-transform hover:scale-110 active:scale-95" onclick="makeHonk()">
@@ -103,28 +107,28 @@
         <p class="text-white/80 text-xs mt-1">Нажми на паровоз, чтобы погудеть!</p>
     </div>
 
-    <!-- Main Dashboard -->
+    <!-- Главная панель -->
     <div class="train-card w-full max-w-md p-6 relative z-10">
         <div class="text-center mb-8">
             <p class="text-gray-500 text-lg">В твоем депо:</p>
             <div id="balance" class="text-6xl font-bold text-slate-800">0 ₽</div>
         </div>
 
-        <!-- Action Buttons -->
+        <!-- Кнопки действий -->
         <div class="grid grid-cols-2 gap-4 mb-8">
             <button onclick="openModal('income')" class="custom-btn bg-emerald-500 hover:bg-emerald-400 text-white rounded-3xl py-6 flex flex-col items-center">
                 <span class="text-3xl mb-1">💰</span>
-                <span>ПРИБЫЛЬ</span>
+                <span class="font-bold">ПРИБЫЛЬ</span>
             </button>
             <button onclick="openModal('expense')" class="custom-btn bg-rose-500 hover:bg-rose-400 text-white rounded-3xl py-6 flex flex-col items-center">
                 <span class="text-3xl mb-1">🍭</span>
-                <span>РАСХОДЫ</span>
+                <span class="font-bold">РАСХОДЫ</span>
             </button>
         </div>
 
-        <!-- Progress to Goal -->
+        <!-- Прогресс -->
         <div class="mb-6">
-            <div class="flex justify-between text-sm mb-1 text-gray-600">
+            <div class="flex justify-between text-sm mb-1 text-gray-600 font-bold">
                 <span>Путь к мечте</span>
                 <span id="goal-percent">0%</span>
             </div>
@@ -133,22 +137,22 @@
             </div>
         </div>
 
-        <!-- History -->
+        <!-- История -->
         <div class="mt-4">
             <h3 class="text-lg mb-2 text-slate-600 border-b-2 border-dashed border-slate-200 pb-1 font-bold">Дневник поездок:</h3>
-            <p class="text-[10px] text-gray-400 mb-2 uppercase tracking-wider">Нажми на вагон, чтобы изменить его</p>
+            <p class="text-[10px] text-gray-400 mb-2 uppercase tracking-wider font-bold">Нажми на вагон, чтобы изменить его</p>
             <div id="history" class="history-list h-48 overflow-y-auto space-y-2 pr-2">
                 <p class="text-center text-gray-400 mt-4 italic">Пока поездов не было...</p>
             </div>
         </div>
     </div>
 
-    <!-- Decorative Rails -->
+    <!-- Декоративные рельсы -->
     <div class="grass">
         <div class="rails"></div>
     </div>
 
-    <!-- Modals -->
+    <!-- Модальное окно -->
     <div id="modal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4">
         <div class="bg-white rounded-[40px] w-full max-w-sm p-8 border-8 border-yellow-400 shadow-2xl">
             <h2 id="modal-title" class="text-2xl text-center mb-6 font-bold text-slate-800">Новый вагон!</h2>
@@ -173,7 +177,7 @@
     </div>
 
     <script>
-        // Audio Synthesis Engine
+        // Звуковой движок
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
         function playHonkSound() {
@@ -212,23 +216,20 @@
             osc.stop(audioCtx.currentTime + 0.1);
         }
 
-        // State Management
+        // Управление состоянием
         let state = {
             balance: 0,
             history: [],
             savingsGoal: 1000, 
             modalType: 'income',
-            editingId: null // ID текущей редактируемой записи
+            editingId: null
         };
 
-        // Initialize from LocalStorage
         const savedData = localStorage.getItem('money_express_data');
         if (savedData) {
             try {
                 state = JSON.parse(savedData);
-            } catch(e) {
-                console.error("Error loading state", e);
-            }
+            } catch(e) { console.error(e); }
         }
 
         const balanceDisplay = document.getElementById('balance');
@@ -243,8 +244,8 @@
         function calculateBalance() {
             let total = 0;
             state.history.forEach(item => {
-                if (item.type === 'income') total += item.amount;
-                else total -= item.amount;
+                if (item.type === 'income') total += Number(item.amount);
+                else total -= Number(item.amount);
             });
             state.balance = total;
         }
@@ -261,7 +262,7 @@
                 historyContainer.innerHTML = '<p class="text-center text-gray-400 mt-4 italic">Пока поездов не было...</p>';
             } else {
                 historyContainer.innerHTML = state.history.slice().reverse().map(item => `
-                    <div onclick="openEditModal('${item.id}')" class="flex items-center justify-between p-3 bg-white rounded-2xl border border-slate-100 shadow-sm active:scale-95 transition-transform cursor-pointer">
+                    <div onclick="openEditModal('${item.id}')" class="history-item flex items-center justify-between p-3 bg-white rounded-2xl border border-slate-100 shadow-sm active:scale-95 transition-all cursor-pointer">
                         <div class="flex items-center">
                             <span class="text-2xl mr-3">${item.type === 'income' ? '📦' : '🛤️'}</span>
                             <div class="flex flex-col">
@@ -275,7 +276,6 @@
                     </div>
                 `).join('');
             }
-
             localStorage.setItem('money_express_data', JSON.stringify(state));
         }
 
@@ -295,15 +295,16 @@
             state.modalType = type;
             state.editingId = null;
             
-            const title = document.getElementById('modal-title');
             deleteBtn.classList.add('hidden');
+            document.getElementById('amount-input').value = '';
+            document.getElementById('note-input').value = '';
             
             if (type === 'income') {
-                title.innerText = 'Прибытие золота! 💰';
+                document.getElementById('modal-title').innerText = 'Прибытие золота! 💰';
                 submitBtn.innerText = 'ПОЕХАЛИ!';
                 submitBtn.className = 'custom-btn bg-emerald-500 text-white py-4 rounded-2xl text-xl font-bold';
             } else {
-                title.innerText = 'Отправление поезда! 🍭';
+                document.getElementById('modal-title').innerText = 'Отправление поезда! 🍭';
                 submitBtn.innerText = 'ПОЕХАЛИ!';
                 submitBtn.className = 'custom-btn bg-rose-500 text-white py-4 rounded-2xl text-xl font-bold';
             }
@@ -336,8 +337,6 @@
             playClickSound();
             modal.classList.add('hidden');
             modal.classList.remove('flex');
-            document.getElementById('amount-input').value = '';
-            document.getElementById('note-input').value = '';
             state.editingId = null;
         }
 
@@ -347,22 +346,17 @@
             const noteInput = document.getElementById('note-input');
             const note = noteInput.value || (state.modalType === 'income' ? 'Подарок' : 'Вкусняшки');
 
-            if (isNaN(amount) || amount <= 0) {
-                return; // Можно добавить уведомление
-            }
+            if (isNaN(amount) || amount <= 0) return;
 
             if (state.editingId) {
-                // Редактирование существующей записи
                 const index = state.history.findIndex(t => t.id === state.editingId);
                 if (index !== -1) {
                     state.history[index].amount = amount;
                     state.history[index].note = note;
                 }
             } else {
-                // Создание новой записи
                 const now = new Date();
                 const dateStr = `${now.getDate()}.${now.getMonth()+1} в ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
-                
                 state.history.push({
                     id: Date.now().toString(),
                     type: state.modalType,
@@ -379,14 +373,12 @@
 
         function deleteTransaction() {
             if (!state.editingId) return;
-            
             state.history = state.history.filter(t => t.id !== state.editingId);
             playClickSound();
             updateUI();
             closeModal();
         }
 
-        // Run on load
         updateUI();
     </script>
 </body>
