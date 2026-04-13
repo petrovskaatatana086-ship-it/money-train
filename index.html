@@ -134,7 +134,8 @@
 
         <!-- History -->
         <div class="mt-4">
-            <h3 class="text-lg mb-2 text-slate-600 border-b-2 border-dashed border-slate-200 pb-1">Дневник поездок:</h3>
+            <h3 class="text-lg mb-2 text-slate-600 border-b-2 border-dashed border-slate-200 pb-1 font-bold">Дневник поездок:</h3>
+            <p class="text-[10px] text-gray-400 mb-2 uppercase tracking-wider">Нажми на вагон, чтобы изменить его</p>
             <div id="history" class="history-list h-48 overflow-y-auto space-y-2 pr-2">
                 <p class="text-center text-gray-400 mt-4 italic">Пока поездов не было...</p>
             </div>
@@ -148,22 +149,23 @@
 
     <!-- Modals -->
     <div id="modal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-[40px] w-full max-w-sm p-8 border-8 border-yellow-400">
-            <h2 id="modal-title" class="text-2xl text-center mb-6 font-bold">Новый вагон!</h2>
+        <div class="bg-white rounded-[40px] w-full max-w-sm p-8 border-8 border-yellow-400 shadow-2xl">
+            <h2 id="modal-title" class="text-2xl text-center mb-6 font-bold text-slate-800">Новый вагон!</h2>
             
             <div class="space-y-4">
                 <div>
                     <label class="block text-gray-500 text-sm mb-1 ml-2 font-bold">Сколько монет?</label>
-                    <input type="number" id="amount-input" inputmode="numeric" class="w-full text-3xl p-4 bg-gray-100 rounded-2xl border-none focus:ring-4 ring-yellow-200 text-center font-bold" placeholder="0">
+                    <input type="number" id="amount-input" inputmode="numeric" class="w-full text-3xl p-4 bg-gray-100 rounded-2xl border-none focus:ring-4 ring-yellow-200 text-center font-bold text-slate-800" placeholder="0">
                 </div>
                 <div>
                     <label class="block text-gray-500 text-sm mb-1 ml-2 font-bold">Что случилось?</label>
-                    <input type="text" id="note-input" class="w-full p-4 bg-gray-100 rounded-2xl border-none focus:ring-4 ring-yellow-200 text-center" placeholder="Например: Купил мороженое">
+                    <input type="text" id="note-input" class="w-full p-4 bg-gray-100 rounded-2xl border-none focus:ring-4 ring-yellow-200 text-center text-slate-800" placeholder="Например: Подарок">
                 </div>
             </div>
 
             <div class="flex flex-col gap-3 mt-8">
                 <button id="submit-btn" onclick="saveTransaction()" class="custom-btn bg-emerald-500 text-white py-4 rounded-2xl text-xl font-bold">ПОЕХАЛИ!</button>
+                <button id="delete-btn" onclick="deleteTransaction()" class="custom-btn bg-slate-200 text-slate-500 py-3 rounded-2xl font-bold hidden">УДАЛИТЬ ВАГОН</button>
                 <button onclick="closeModal()" class="text-gray-400 py-2 font-bold">Назад в депо</button>
             </div>
         </div>
@@ -175,26 +177,19 @@
 
         function playHonkSound() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            
             const osc1 = audioCtx.createOscillator();
             const osc2 = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-
             osc1.type = 'sawtooth';
             osc2.type = 'sawtooth';
-            
-            // Typical train horn frequencies
-            osc1.frequency.setValueAtTime(311.13, audioCtx.currentTime); // Eb4
-            osc2.frequency.setValueAtTime(370.00, audioCtx.currentTime); // Gb4
-
+            osc1.frequency.setValueAtTime(311.13, audioCtx.currentTime); 
+            osc2.frequency.setValueAtTime(370.00, audioCtx.currentTime); 
             gain.gain.setValueAtTime(0, audioCtx.currentTime);
             gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.1);
             gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
-
             osc1.connect(gain);
             osc2.connect(gain);
             gain.connect(audioCtx.destination);
-
             osc1.start();
             osc2.start();
             osc1.stop(audioCtx.currentTime + 1.2);
@@ -205,17 +200,13 @@
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-
             osc.type = 'square';
             osc.frequency.setValueAtTime(150, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
-
             gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-
             osc.connect(gain);
             gain.connect(audioCtx.destination);
-
             osc.start();
             osc.stop(audioCtx.currentTime + 0.1);
         }
@@ -225,7 +216,8 @@
             balance: 0,
             history: [],
             savingsGoal: 1000, 
-            modalType: 'income'
+            modalType: 'income',
+            editingId: null // ID текущей редактируемой записи
         };
 
         // Initialize from LocalStorage
@@ -245,22 +237,30 @@
         const modal = document.getElementById('modal');
         const train = document.getElementById('train');
         const submitBtn = document.getElementById('submit-btn');
+        const deleteBtn = document.getElementById('delete-btn');
+
+        function calculateBalance() {
+            let total = 0;
+            state.history.forEach(item => {
+                if (item.type === 'income') total += item.amount;
+                else total -= item.amount;
+            });
+            state.balance = total;
+        }
 
         function updateUI() {
-            // Update Balance
+            calculateBalance();
             balanceDisplay.innerText = `${state.balance} ₽`;
             
-            // Update Goal
             const percent = state.savingsGoal > 0 ? Math.min(Math.round((state.balance / state.savingsGoal) * 100), 100) : 0;
             goalBar.style.width = `${percent}%`;
             goalPercent.innerText = `${percent}%`;
 
-            // Update History
             if (state.history.length === 0) {
                 historyContainer.innerHTML = '<p class="text-center text-gray-400 mt-4 italic">Пока поездов не было...</p>';
             } else {
-                historyContainer.innerHTML = state.history.map(item => `
-                    <div class="flex items-center justify-between p-3 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                historyContainer.innerHTML = state.history.slice().reverse().map(item => `
+                    <div onclick="openEditModal('${item.id}')" class="flex items-center justify-between p-3 bg-white rounded-2xl border border-slate-100 shadow-sm active:scale-95 transition-transform cursor-pointer">
                         <div class="flex items-center">
                             <span class="text-2xl mr-3">${item.type === 'income' ? '📦' : '🛤️'}</span>
                             <div class="flex flex-col">
@@ -272,44 +272,61 @@
                             ${item.type === 'income' ? '+' : '-'}${item.amount} ₽
                         </span>
                     </div>
-                `).reverse().join('');
+                `).join('');
             }
 
-            // Save to LocalStorage
             localStorage.setItem('money_express_data', JSON.stringify(state));
         }
 
         function makeHonk() {
-            // Sound effect
             playHonkSound();
-
-            // Visual feedback
             const steam = document.getElementById('steam');
             steam.classList.remove('animate-puff');
             void steam.offsetWidth; 
             steam.classList.add('animate-puff');
-
             train.classList.add('vibrate');
             setTimeout(() => train.classList.remove('vibrate'), 400);
-
-            if (navigator.vibrate) {
-                navigator.vibrate([100, 50, 100]);
-            }
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
         }
 
         function openModal(type) {
             playClickSound();
             state.modalType = type;
+            state.editingId = null;
+            
             const title = document.getElementById('modal-title');
+            deleteBtn.classList.add('hidden');
             
             if (type === 'income') {
                 title.innerText = 'Прибытие золота! 💰';
+                submitBtn.innerText = 'ПОЕХАЛИ!';
                 submitBtn.className = 'custom-btn bg-emerald-500 text-white py-4 rounded-2xl text-xl font-bold';
             } else {
                 title.innerText = 'Отправление поезда! 🍭';
+                submitBtn.innerText = 'ПОЕХАЛИ!';
                 submitBtn.className = 'custom-btn bg-rose-500 text-white py-4 rounded-2xl text-xl font-bold';
             }
             
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function openEditModal(id) {
+            playClickSound();
+            const transaction = state.history.find(t => t.id === id);
+            if (!transaction) return;
+
+            state.editingId = id;
+            state.modalType = transaction.type;
+
+            document.getElementById('modal-title').innerText = 'Изменить вагон 🛠️';
+            document.getElementById('amount-input').value = transaction.amount;
+            document.getElementById('note-input').value = transaction.note;
+            
+            submitBtn.innerText = 'СОХРАНИТЬ';
+            submitBtn.className = 'custom-btn bg-blue-500 text-white py-4 rounded-2xl text-xl font-bold';
+            deleteBtn.classList.remove('hidden');
+
             modal.classList.remove('hidden');
             modal.classList.add('flex');
         }
@@ -320,6 +337,7 @@
             modal.classList.remove('flex');
             document.getElementById('amount-input').value = '';
             document.getElementById('note-input').value = '';
+            state.editingId = null;
         }
 
         function saveTransaction() {
@@ -329,27 +347,40 @@
             const note = noteInput.value || (state.modalType === 'income' ? 'Подарок' : 'Вкусняшки');
 
             if (isNaN(amount) || amount <= 0) {
-                alert('Сначала введи число!');
-                return;
+                return; // Можно добавить уведомление
             }
 
-            if (state.modalType === 'income') {
-                state.balance += amount;
+            if (state.editingId) {
+                // Редактирование существующей записи
+                const index = state.history.findIndex(t => t.id === state.editingId);
+                if (index !== -1) {
+                    state.history[index].amount = amount;
+                    state.history[index].note = note;
+                }
             } else {
-                state.balance -= amount;
+                // Создание новой записи
+                const now = new Date();
+                const dateStr = `${now.getDate()}.${now.getMonth()+1} в ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+                
+                state.history.push({
+                    id: Date.now().toString(),
+                    type: state.modalType,
+                    amount: amount,
+                    note: note,
+                    date: dateStr
+                });
+                makeHonk();
             }
 
-            const now = new Date();
-            const dateStr = `${now.getDate()}.${now.getMonth()+1} в ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+            updateUI();
+            closeModal();
+        }
 
-            state.history.push({
-                type: state.modalType,
-                amount: amount,
-                note: note,
-                date: dateStr
-            });
-
-            makeHonk();
+        function deleteTransaction() {
+            if (!state.editingId) return;
+            
+            state.history = state.history.filter(t => t.id !== state.editingId);
+            playClickSound();
             updateUI();
             closeModal();
         }
