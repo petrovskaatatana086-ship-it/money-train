@@ -89,9 +89,13 @@
             border-radius: 10px;
         }
         
+        .history-item {
+            transition: all 0.2s;
+        }
+        
         .history-item:hover {
             background-color: #f8fafc;
-            border-color: #e2e8f0;
+            transform: translateX(4px);
         }
     </style>
 </head>
@@ -103,15 +107,15 @@
         <div id="train" class="text-9xl cursor-pointer transition-transform hover:scale-110 active:scale-95" onclick="makeHonk()">
             🚂
         </div>
-        <h1 class="text-3xl text-white mt-4 drop-shadow-lg text-center">Денежный Экспресс</h1>
+        <h1 class="text-3xl text-white mt-4 drop-shadow-lg text-center font-bold">Денежный Экспресс</h1>
         <p class="text-white/80 text-xs mt-1">Нажми на паровоз, чтобы погудеть!</p>
     </div>
 
     <!-- Главная панель -->
     <div class="train-card w-full max-w-md p-6 relative z-10">
         <div class="text-center mb-8">
-            <p class="text-gray-500 text-lg">В твоем депо:</p>
-            <div id="balance" class="text-6xl font-bold text-slate-800">0 ₽</div>
+            <p class="text-gray-500 text-lg font-bold">В твоем депо:</p>
+            <div id="balance" class="text-6xl font-bold text-slate-800 tracking-tight">0 ₽</div>
         </div>
 
         <!-- Кнопки действий -->
@@ -140,9 +144,9 @@
         <!-- История -->
         <div class="mt-4">
             <h3 class="text-lg mb-2 text-slate-600 border-b-2 border-dashed border-slate-200 pb-1 font-bold">Дневник поездок:</h3>
-            <p class="text-[10px] text-gray-400 mb-2 uppercase tracking-wider font-bold">Нажми на вагон, чтобы изменить его</p>
+            <p class="text-[10px] text-gray-400 mb-2 uppercase tracking-wider font-bold">Нажми на любой вагон, чтобы исправить его</p>
             <div id="history" class="history-list h-48 overflow-y-auto space-y-2 pr-2">
-                <p class="text-center text-gray-400 mt-4 italic">Пока поездов не было...</p>
+                <!-- Сюда добавляются записи -->
             </div>
         </div>
     </div>
@@ -154,7 +158,7 @@
 
     <!-- Модальное окно -->
     <div id="modal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-[40px] w-full max-w-sm p-8 border-8 border-yellow-400 shadow-2xl">
+        <div class="bg-white rounded-[40px] w-full max-w-sm p-8 border-8 border-yellow-400 shadow-2xl transition-all">
             <h2 id="modal-title" class="text-2xl text-center mb-6 font-bold text-slate-800">Новый вагон!</h2>
             
             <div class="space-y-4">
@@ -170,8 +174,9 @@
 
             <div class="flex flex-col gap-3 mt-8">
                 <button id="submit-btn" onclick="saveTransaction()" class="custom-btn bg-emerald-500 text-white py-4 rounded-2xl text-xl font-bold">ПОЕХАЛИ!</button>
-                <button id="delete-btn" onclick="deleteTransaction()" class="custom-btn bg-slate-200 text-slate-500 py-3 rounded-2xl font-bold hidden">УДАЛИТЬ ВАГОН</button>
-                <button onclick="closeModal()" class="text-gray-400 py-2 font-bold">Назад в депо</button>
+                <!-- Кнопка удаления, теперь она будет показываться правильно -->
+                <button id="delete-btn" onclick="deleteTransaction()" class="custom-btn bg-rose-100 text-rose-500 py-3 rounded-2xl font-bold hidden border-2 border-rose-200">УДАЛИТЬ ВАГОН</button>
+                <button onclick="closeModal()" class="text-gray-400 py-2 font-bold hover:text-gray-600 transition-colors">Назад в депо</button>
             </div>
         </div>
     </div>
@@ -216,7 +221,7 @@
             osc.stop(audioCtx.currentTime + 0.1);
         }
 
-        // Управление состоянием
+        // Состояние приложения
         let state = {
             balance: 0,
             history: [],
@@ -225,10 +230,13 @@
             editingId: null
         };
 
+        // Загрузка данных
         const savedData = localStorage.getItem('money_express_data');
         if (savedData) {
             try {
                 state = JSON.parse(savedData);
+                // На всякий случай сбрасываем ID редактирования при загрузке
+                state.editingId = null;
             } catch(e) { console.error(e); }
         }
 
@@ -244,8 +252,9 @@
         function calculateBalance() {
             let total = 0;
             state.history.forEach(item => {
-                if (item.type === 'income') total += Number(item.amount);
-                else total -= Number(item.amount);
+                const val = Number(item.amount) || 0;
+                if (item.type === 'income') total += val;
+                else total -= val;
             });
             state.balance = total;
         }
@@ -261,13 +270,14 @@
             if (state.history.length === 0) {
                 historyContainer.innerHTML = '<p class="text-center text-gray-400 mt-4 italic">Пока поездов не было...</p>';
             } else {
+                // Выводим историю: от новых к старым
                 historyContainer.innerHTML = state.history.slice().reverse().map(item => `
-                    <div onclick="openEditModal('${item.id}')" class="history-item flex items-center justify-between p-3 bg-white rounded-2xl border border-slate-100 shadow-sm active:scale-95 transition-all cursor-pointer">
+                    <div onclick="openEditModal('${item.id}')" class="history-item flex items-center justify-between p-3 bg-white rounded-2xl border border-slate-100 shadow-sm active:scale-95 cursor-pointer">
                         <div class="flex items-center">
-                            <span class="text-2xl mr-3">${item.type === 'income' ? '📦' : '🛤️'}</span>
+                            <span class="text-2xl mr-3">${item.type === 'income' ? '💰' : '🍭'}</span>
                             <div class="flex flex-col">
                                 <span class="font-bold text-slate-700 leading-tight">${item.note}</span>
-                                <span class="text-xs text-gray-400">${item.date}</span>
+                                <span class="text-[10px] text-gray-400 font-bold">${item.date}</span>
                             </div>
                         </div>
                         <span class="font-bold ${item.type === 'income' ? 'text-emerald-500' : 'text-rose-500'}">
@@ -295,9 +305,12 @@
             state.modalType = type;
             state.editingId = null;
             
-            deleteBtn.classList.add('hidden');
+            // Сбрасываем поля
             document.getElementById('amount-input').value = '';
             document.getElementById('note-input').value = '';
+            
+            // Скрываем кнопку удаления для новых записей
+            deleteBtn.classList.add('hidden');
             
             if (type === 'income') {
                 document.getElementById('modal-title').innerText = 'Прибытие золота! 💰';
@@ -313,7 +326,8 @@
             modal.classList.add('flex');
         }
 
-        function openEditModal(id) {
+        // Ключевая функция для редактирования ЛЮБОЙ записи
+        window.openEditModal = function(id) {
             playClickSound();
             const transaction = state.history.find(t => t.id === id);
             if (!transaction) return;
@@ -326,12 +340,14 @@
             document.getElementById('note-input').value = transaction.note;
             
             submitBtn.innerText = 'СОХРАНИТЬ';
-            submitBtn.className = 'custom-btn bg-blue-500 text-white py-4 rounded-2xl text-xl font-bold';
+            submitBtn.className = 'custom-btn bg-blue-500 text-white py-4 rounded-2xl text-xl font-bold w-full';
+            
+            // Показываем кнопку удаления!
             deleteBtn.classList.remove('hidden');
 
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-        }
+        };
 
         function closeModal() {
             playClickSound();
@@ -346,19 +362,25 @@
             const noteInput = document.getElementById('note-input');
             const note = noteInput.value || (state.modalType === 'income' ? 'Подарок' : 'Вкусняшки');
 
-            if (isNaN(amount) || amount <= 0) return;
+            if (isNaN(amount) || amount <= 0) {
+                amountInput.classList.add('ring-2', 'ring-rose-500');
+                setTimeout(() => amountInput.classList.remove('ring-2', 'ring-rose-500'), 1000);
+                return;
+            }
 
             if (state.editingId) {
+                // Находим именно ту запись, по которой кликнули
                 const index = state.history.findIndex(t => t.id === state.editingId);
                 if (index !== -1) {
                     state.history[index].amount = amount;
                     state.history[index].note = note;
                 }
             } else {
+                // Создаем новую с уникальным ID
                 const now = new Date();
                 const dateStr = `${now.getDate()}.${now.getMonth()+1} в ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
                 state.history.push({
-                    id: Date.now().toString(),
+                    id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
                     type: state.modalType,
                     amount: amount,
                     note: note,
@@ -373,12 +395,16 @@
 
         function deleteTransaction() {
             if (!state.editingId) return;
+            
+            // Удаляем запись из истории
             state.history = state.history.filter(t => t.id !== state.editingId);
+            
             playClickSound();
             updateUI();
             closeModal();
         }
 
+        // Инициализация при первом запуске
         updateUI();
     </script>
 </body>
