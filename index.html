@@ -2,19 +2,18 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Денежный Экспресс 🚂</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Comfortaa', cursive;
-            background: #87CEEB; /* Небесно-голубой */
+            background: #87CEEB;
             touch-action: manipulation;
             user-select: none;
             overflow-x: hidden;
         }
-
         .grass {
             background: linear-gradient(to bottom, #7CFC00 0%, #55a630 100%);
             height: 200px;
@@ -23,7 +22,6 @@
             width: 100%;
             z-index: -1;
         }
-
         .rails {
             height: 20px;
             background: repeating-linear-gradient(90deg, #5c4033 0, #5c4033 20px, transparent 20px, transparent 60px);
@@ -33,14 +31,12 @@
             position: absolute;
             top: 40px;
         }
-
         .train-card {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 40px;
             border: 8px solid #E63946;
             box-shadow: 0 15px 0 rgba(0,0,0,0.1);
         }
-
         .steam {
             position: absolute;
             top: -40px;
@@ -50,58 +46,44 @@
             opacity: 0;
             pointer-events: none;
         }
-
         @keyframes puff {
             0% { transform: translate(-50%, 0) scale(1); opacity: 0.8; }
             100% { transform: translate(-50%, -120px) scale(2.5); opacity: 0; }
         }
-
-        .animate-puff {
-            animation: puff 0.8s ease-out forwards;
-        }
-
-        .vibrate {
-            animation: vibrate-anim 0.2s linear infinite;
-        }
-
+        .animate-puff { animation: puff 0.8s ease-out forwards; }
+        .vibrate { animation: vibrate-anim 0.2s linear infinite; }
         @keyframes vibrate-anim {
             0% { transform: rotate(0deg); }
             25% { transform: rotate(2deg); }
             75% { transform: rotate(-2deg); }
             100% { transform: rotate(0deg); }
         }
-
         .custom-btn {
             transition: all 0.2s;
             box-shadow: 0 8px 0 rgba(0,0,0,0.15);
         }
-
         .custom-btn:active {
             transform: translateY(6px);
             box-shadow: 0 2px 0 rgba(0,0,0,0.15);
         }
-
-        .history-list::-webkit-scrollbar {
-            width: 8px;
-        }
-        .history-list::-webkit-scrollbar-thumb {
-            background: #E63946;
-            border-radius: 10px;
-        }
-        
-        .history-item {
+        .history-list::-webkit-scrollbar { width: 8px; }
+        .history-list::-webkit-scrollbar-thumb { background: #E63946; border-radius: 10px; }
+        .history-item { transition: all 0.2s; }
+        .history-item:hover { background-color: #f8fafc; transform: translateX(4px); }
+        .goal-card {
             transition: all 0.2s;
         }
-        
-        .history-item:hover {
-            background-color: #f8fafc;
-            transform: translateX(4px);
+        .goal-card:hover { transform: translateY(-2px); }
+        .modal-transition {
+            transition: transform 0.2s ease-out, opacity 0.2s ease-out;
         }
+        .goals-list::-webkit-scrollbar { height: 6px; }
+        .goals-list::-webkit-scrollbar-thumb { background: #F59E0B; border-radius: 10px; }
     </style>
 </head>
-<body class="flex flex-col items-center min-h-screen p-4">
+<body class="flex flex-col items-center min-h-screen p-4 pb-32">
 
-    <!-- Заголовок и Паровоз -->
+    <!-- Паровоз и заголовок -->
     <div class="relative mt-8 mb-4 text-center">
         <div id="steam" class="steam">☁️</div>
         <div id="train" class="text-9xl cursor-pointer transition-transform hover:scale-110 active:scale-95" onclick="makeHonk()">
@@ -111,84 +93,125 @@
         <p class="text-white/80 text-xs mt-1">Нажми на паровоз, чтобы погудеть!</p>
     </div>
 
-    <!-- Главная панель -->
+    <!-- Главная карточка -->
     <div class="train-card w-full max-w-md p-6 relative z-10">
-        <div class="text-center mb-8">
-            <p class="text-gray-500 text-lg font-bold">В твоем депо:</p>
+        <!-- Баланс депо -->
+        <div class="text-center mb-6">
+            <p class="text-gray-500 text-lg font-bold">В твоём депо:</p>
             <div id="balance" class="text-6xl font-bold text-slate-800 tracking-tight">0 ₽</div>
+            <p class="text-xs text-gray-400 mt-1">свободные средства</p>
         </div>
 
-        <!-- Кнопки действий -->
-        <div class="grid grid-cols-2 gap-4 mb-8">
-            <button onclick="openModal('income')" class="custom-btn bg-emerald-500 hover:bg-emerald-400 text-white rounded-3xl py-6 flex flex-col items-center">
-                <span class="text-3xl mb-1">💰</span>
+        <!-- Кнопки Доход / Расход -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <button onclick="openTransactionModal('income')" class="custom-btn bg-emerald-500 hover:bg-emerald-400 text-white rounded-2xl py-4 flex flex-col items-center shadow-md">
+                <span class="text-2xl mb-1">💰</span>
                 <span class="font-bold uppercase text-xs">Прибыль</span>
             </button>
-            <button onclick="openModal('expense')" class="custom-btn bg-rose-500 hover:bg-rose-400 text-white rounded-3xl py-6 flex flex-col items-center">
-                <span class="text-3xl mb-1">🍭</span>
-                <span class="font-bold uppercase text-xs">Расходы</span>
+            <button onclick="openTransactionModal('expense')" class="custom-btn bg-rose-500 hover:bg-rose-400 text-white rounded-2xl py-4 flex flex-col items-center shadow-md">
+                <span class="text-2xl mb-1">🍭</span>
+                <span class="font-bold uppercase text-xs">Расход</span>
             </button>
         </div>
 
-        <!-- Прогресс -->
-        <div class="mb-6">
-            <div class="flex justify-between text-sm mb-1 text-gray-600 font-bold">
-                <span>Путь к мечте</span>
-                <span id="goal-percent">0%</span>
+        <!-- Блок целей (горизонтальный скролл) -->
+        <div class="mb-4">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="text-lg font-bold text-slate-700">🎯 Мои цели</h3>
+                <button onclick="openGoalCreatorModal()" class="bg-amber-100 hover:bg-amber-200 text-amber-700 text-sm px-3 py-1 rounded-full flex items-center gap-1 transition">
+                    <span class="text-lg">+</span> Новая цель
+                </button>
             </div>
-            <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden border-2 border-slate-300">
-                <div id="goal-bar" class="bg-yellow-400 h-full transition-all duration-500" style="width: 0%"></div>
+            <div id="goals-container" class="goals-list flex overflow-x-auto gap-3 pb-3">
+                <div class="text-center text-gray-400 w-full">Загружаем цели...</div>
             </div>
         </div>
 
-        <!-- История -->
-        <div class="mt-4">
+        <!-- История операций -->
+        <div class="mt-2">
             <h3 class="text-lg mb-2 text-slate-600 border-b-2 border-dashed border-slate-200 pb-1 font-bold">Дневник поездок:</h3>
-            <p class="text-[10px] text-gray-400 mb-2 uppercase tracking-wider font-bold">Нажми на вагон, чтобы изменить его</p>
-            <div id="history" class="history-list h-48 overflow-y-auto space-y-2 pr-2">
-                <!-- Записи появятся здесь -->
-            </div>
+            <p class="text-[10px] text-gray-400 mb-2 uppercase tracking-wider font-bold">🚂 нажми на вагон, чтобы изменить или удалить</p>
+            <div id="history" class="history-list h-48 overflow-y-auto space-y-2 pr-2"></div>
         </div>
     </div>
 
-    <!-- Декоративные рельсы -->
-    <div class="grass">
-        <div class="rails"></div>
-    </div>
+    <!-- Рельсы и трава -->
+    <div class="grass"><div class="rails"></div></div>
 
-    <!-- Модальное окно -->
-    <div id="modal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-[40px] w-full max-w-sm p-8 border-8 border-yellow-400 shadow-2xl transition-all scale-95 opacity-0" id="modal-container">
-            <h2 id="modal-title" class="text-2xl text-center mb-6 font-bold text-slate-800">Новый вагон!</h2>
-            
+    <!-- МОДАЛКА: Доход / Расход -->
+    <div id="transactionModal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4">
+        <div id="transactionModalContainer" class="bg-white rounded-[40px] w-full max-w-sm p-8 border-8 border-yellow-400 shadow-2xl modal-transition transform scale-95 opacity-0">
+            <h2 id="transModalTitle" class="text-2xl text-center mb-6 font-bold text-slate-800">Операция</h2>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-gray-500 text-sm mb-1 ml-2 font-bold">Сколько монет?</label>
-                    <input type="number" id="amount-input" inputmode="numeric" class="w-full text-3xl p-4 bg-gray-100 rounded-2xl border-none focus:ring-4 ring-yellow-200 text-center font-bold text-slate-800" placeholder="0">
+                    <label class="block text-gray-500 text-sm mb-1 ml-2 font-bold">Сумма (₽)</label>
+                    <input type="number" id="transAmount" inputmode="numeric" class="w-full text-3xl p-4 bg-gray-100 rounded-2xl border-none focus:ring-4 ring-yellow-200 text-center font-bold" placeholder="0">
                 </div>
                 <div>
-                    <label class="block text-gray-500 text-sm mb-1 ml-2 font-bold">Что случилось?</label>
-                    <input type="text" id="note-input" class="w-full p-4 bg-gray-100 rounded-2xl border-none focus:ring-4 ring-yellow-200 text-center text-slate-800" placeholder="Например: Подарок">
+                    <label class="block text-gray-500 text-sm mb-1 ml-2 font-bold">Описание</label>
+                    <input type="text" id="transNote" class="w-full p-4 bg-gray-100 rounded-2xl border-none focus:ring-4 ring-yellow-200 text-center" placeholder="Например: Подарок">
                 </div>
             </div>
-
             <div class="flex flex-col gap-3 mt-8">
-                <button id="submit-btn" onclick="saveTransaction()" class="custom-btn bg-emerald-500 text-white py-4 rounded-2xl text-xl font-bold uppercase">Поехали!</button>
-                <button id="delete-btn" onclick="deleteTransaction()" class="custom-btn bg-rose-100 text-rose-500 py-3 rounded-2xl font-bold hidden uppercase border-2 border-rose-200">Удалить вагон</button>
-                <button onclick="closeModal()" class="text-gray-400 py-2 font-bold hover:text-gray-600 transition-colors uppercase text-sm">В депо</button>
+                <button id="transSubmitBtn" onclick="saveTransaction()" class="custom-btn bg-emerald-500 text-white py-4 rounded-2xl text-xl font-bold uppercase">Добавить</button>
+                <button id="transDeleteBtn" onclick="deleteTransaction()" class="custom-btn bg-rose-100 text-rose-500 py-3 rounded-2xl font-bold hidden uppercase border-2 border-rose-200">Удалить</button>
+                <button onclick="closeTransactionModal()" class="text-gray-400 py-2 font-bold hover:text-gray-600 transition-colors uppercase text-sm">В депо</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА: Пополнение цели (с кнопкой "Все свободные") -->
+    <div id="goalDepositModal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4">
+        <div id="goalDepositContainer" class="bg-white rounded-[40px] w-full max-w-sm p-8 border-8 border-amber-400 shadow-2xl modal-transition transform scale-95 opacity-0">
+            <h2 class="text-2xl text-center mb-2 font-bold text-slate-800">💰 Пополнить цель</h2>
+            <p id="depositGoalName" class="text-center text-amber-600 font-bold mb-4"></p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-gray-500 text-sm mb-1 ml-2 font-bold">Сумма (₽)</label>
+                    <input type="number" id="depositAmount" class="w-full text-3xl p-4 bg-gray-100 rounded-2xl border-none focus:ring-4 ring-amber-200 text-center font-bold" placeholder="0">
+                </div>
+                <button id="maxDepositBtn" class="w-full bg-amber-100 hover:bg-amber-200 text-amber-800 py-2 rounded-xl text-sm font-bold transition">✨ Внести все свободные средства</button>
+                <div>
+                    <label class="block text-gray-500 text-sm mb-1 ml-2 font-bold">Комментарий (необязательно)</label>
+                    <input type="text" id="depositNote" class="w-full p-4 bg-gray-100 rounded-2xl border-none focus:ring-4 ring-amber-200 text-center" placeholder="Например: на поездку">
+                </div>
+            </div>
+            <div class="flex flex-col gap-3 mt-8">
+                <button onclick="saveGoalDeposit()" class="custom-btn bg-amber-500 text-white py-4 rounded-2xl text-xl font-bold uppercase">Перевести</button>
+                <button onclick="closeGoalDepositModal()" class="text-gray-400 py-2 font-bold hover:text-gray-600 transition-colors uppercase text-sm">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА: Создание / Редактирование цели -->
+    <div id="goalEditorModal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4">
+        <div id="goalEditorContainer" class="bg-white rounded-[40px] w-full max-w-sm p-8 border-8 border-amber-400 shadow-2xl modal-transition transform scale-95 opacity-0">
+            <h2 id="goalEditorTitle" class="text-2xl text-center mb-6 font-bold text-slate-800">Новая цель</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-gray-500 text-sm mb-1 ml-2 font-bold">Название</label>
+                    <input type="text" id="goalEditName" class="w-full p-4 bg-gray-100 rounded-2xl border-none focus:ring-4 ring-amber-200 text-center font-bold" placeholder="Путешествие, Машина...">
+                </div>
+                <div>
+                    <label class="block text-gray-500 text-sm mb-1 ml-2 font-bold">Целевая сумма (₽)</label>
+                    <input type="number" id="goalEditTarget" class="w-full text-3xl p-4 bg-gray-100 rounded-2xl border-none focus:ring-4 ring-amber-200 text-center font-bold" placeholder="10000">
+                </div>
+            </div>
+            <div class="flex flex-col gap-3 mt-8">
+                <button id="goalEditorSaveBtn" onclick="saveGoalFromEditor()" class="custom-btn bg-amber-500 text-white py-4 rounded-2xl text-xl font-bold uppercase">Сохранить</button>
+                <button id="goalEditorDeleteBtn" onclick="deleteGoalFromEditor()" class="hidden custom-btn bg-rose-100 text-rose-500 py-3 rounded-2xl font-bold uppercase border-2 border-rose-200">Удалить цель</button>
+                <button onclick="closeGoalEditorModal()" class="text-gray-400 py-2 font-bold hover:text-gray-600 transition-colors uppercase text-sm">Назад</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Аудио контекст
+        // ЗВУКИ
         let audioCtx = null;
-
         function initAudio() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
         }
-
         function playHonkSound() {
             initAudio();
             const osc1 = audioCtx.createOscillator();
@@ -196,8 +219,8 @@
             const gain = audioCtx.createGain();
             osc1.type = 'sawtooth';
             osc2.type = 'sawtooth';
-            osc1.frequency.setValueAtTime(311.13, audioCtx.currentTime); 
-            osc2.frequency.setValueAtTime(370.00, audioCtx.currentTime); 
+            osc1.frequency.setValueAtTime(311.13, audioCtx.currentTime);
+            osc2.frequency.setValueAtTime(370.00, audioCtx.currentTime);
             gain.gain.setValueAtTime(0, audioCtx.currentTime);
             gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.1);
             gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
@@ -209,7 +232,6 @@
             osc1.stop(audioCtx.currentTime + 1.2);
             osc2.stop(audioCtx.currentTime + 1.2);
         }
-
         function playClickSound() {
             initAudio();
             const osc = audioCtx.createOscillator();
@@ -225,158 +247,331 @@
             osc.stop(audioCtx.currentTime + 0.1);
         }
 
-        // Состояние
+        // ДАННЫЕ
         let state = {
-            balance: 0,
-            history: [],
-            savingsGoal: 1000, 
-            modalType: 'income',
-            editingId: null
+            history: [],      // { id, type, amount, note, date, goalId? }
+            goals: []         // { id, name, targetAmount, savedAmount }
         };
 
-        // Загрузка
-        const stored = localStorage.getItem('money_express_v3');
+        const stored = localStorage.getItem('money_express_v5');
         if (stored) {
-            state = JSON.parse(stored);
-            state.editingId = null; // Сброс при загрузке
+            try {
+                const parsed = JSON.parse(stored);
+                state.history = parsed.history || [];
+                state.goals = parsed.goals || [];
+            } catch(e) {}
         }
 
-        const historyContainer = document.getElementById('history');
-        const balanceDisplay = document.getElementById('balance');
-        const modal = document.getElementById('modal');
-        const modalContainer = document.getElementById('modal-container');
-        const deleteBtn = document.getElementById('delete-btn');
-        const submitBtn = document.getElementById('submit-btn');
+        function computeBalance() {
+            let balance = 0;
+            for (let item of state.history) {
+                if (item.type === 'income') balance += item.amount;
+                else if (item.type === 'expense') balance -= item.amount;
+                else if (item.type === 'goal_deposit') balance -= item.amount;
+            }
+            return balance;
+        }
+
+        function computeGoalSavings() {
+            state.goals.forEach(g => g.savedAmount = 0);
+            for (let item of state.history) {
+                if (item.type === 'goal_deposit' && item.goalId) {
+                    const goal = state.goals.find(g => g.id === item.goalId);
+                    if (goal) goal.savedAmount += item.amount;
+                }
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
 
         function updateUI() {
-            // Считаем баланс
-            state.balance = state.history.reduce((acc, item) => {
-                const val = Number(item.amount);
-                return item.type === 'income' ? acc + val : acc - val;
-            }, 0);
-
-            balanceDisplay.innerText = `${state.balance} ₽`;
-
-            // Прогресс
-            const percent = Math.min(Math.round((state.balance / state.savingsGoal) * 100), 100);
-            document.getElementById('goal-bar').style.width = `${Math.max(0, percent)}%`;
-            document.getElementById('goal-percent').innerText = `${percent}%`;
-
-            // История
-            if (state.history.length === 0) {
-                historyContainer.innerHTML = '<p class="text-center text-gray-400 mt-8 italic">Депо пока пусто...</p>';
+            computeGoalSavings();
+            const balance = computeBalance();
+            document.getElementById('balance').innerText = `${balance} ₽`;
+            
+            // Рендер целей с полем "Осталось собрать"
+            const container = document.getElementById('goals-container');
+            if (state.goals.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-400 w-full py-4">✨ Добавь первую цель ✨</div>';
             } else {
-                historyContainer.innerHTML = state.history.slice().reverse().map(item => `
-                    <div onclick="openEditModal('${item.id}')" class="history-item flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm active:scale-95 cursor-pointer">
-                        <div class="flex items-center">
-                            <span class="text-2xl mr-3">${item.type === 'income' ? '💰' : '🍭'}</span>
-                            <div class="flex flex-col">
-                                <span class="font-bold text-slate-700 leading-none mb-1">${item.note}</span>
-                                <span class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">${item.date}</span>
+                container.innerHTML = state.goals.map(goal => {
+                    const percent = goal.targetAmount > 0 ? Math.min(100, Math.floor((goal.savedAmount / goal.targetAmount) * 100)) : 0;
+                    const left = goal.targetAmount - goal.savedAmount;
+                    const leftText = left > 0 ? `Осталось: ${left} ₽` : 'Цель достигнута! 🎉';
+                    const leftColor = left > 0 ? 'text-gray-600' : 'text-green-600 font-bold';
+                    return `
+                        <div class="goal-card bg-amber-50 rounded-2xl p-3 min-w-[200px] shadow-sm border border-amber-200 flex flex-col">
+                            <div class="flex justify-between items-start">
+                                <span class="font-bold text-slate-800 text-md truncate max-w-[110px]" title="${escapeHtml(goal.name)}">${escapeHtml(goal.name)}</span>
+                                <div class="flex gap-1">
+                                    <button onclick="openGoalDepositModal('${goal.id}')" class="text-xs bg-amber-200 hover:bg-amber-300 px-2 py-1 rounded-full">➕</button>
+                                    <button onclick="openGoalEditorModal('${goal.id}')" class="text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded-full">✏️</button>
+                                </div>
                             </div>
+                            <div class="mt-2 text-xs font-bold flex justify-between">
+                                <span>${goal.savedAmount} ₽</span>
+                                <span>/ ${goal.targetAmount} ₽</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mt-1 overflow-hidden">
+                                <div class="bg-amber-500 h-full transition-all" style="width: ${percent}%"></div>
+                            </div>
+                            <div class="text-right text-[10px] text-gray-500 mt-1">${percent}%</div>
+                            <div class="text-xs font-semibold mt-1 ${leftColor}">${leftText}</div>
                         </div>
-                        <span class="font-bold ${item.type === 'income' ? 'text-emerald-500' : 'text-rose-500'}">
-                            ${item.type === 'income' ? '+' : '-'}${item.amount} ₽
-                        </span>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             }
-
-            localStorage.setItem('money_express_v3', JSON.stringify(state));
-        }
-
-        function openModal(type) {
-            playClickSound();
-            state.modalType = type;
-            state.editingId = null;
             
-            document.getElementById('amount-input').value = '';
-            document.getElementById('note-input').value = '';
-            deleteBtn.classList.add('hidden');
-            
-            if (type === 'income') {
-                document.getElementById('modal-title').innerText = 'Загрузка золота! 💰';
-                submitBtn.className = 'custom-btn bg-emerald-500 text-white py-4 rounded-2xl text-xl font-bold uppercase';
+            // История
+            const historyDiv = document.getElementById('history');
+            if (state.history.length === 0) {
+                historyDiv.innerHTML = '<p class="text-center text-gray-400 mt-8 italic">Депо пока пусто...</p>';
             } else {
-                document.getElementById('modal-title').innerText = 'Траты на конфеты! 🍭';
-                submitBtn.className = 'custom-btn bg-rose-500 text-white py-4 rounded-2xl text-xl font-bold uppercase';
+                historyDiv.innerHTML = state.history.slice().reverse().map(item => {
+                    let icon = '', sign = '', colorClass = '';
+                    if (item.type === 'income') {
+                        icon = '💰'; sign = `+${item.amount} ₽`; colorClass = 'text-emerald-500';
+                    } else if (item.type === 'expense') {
+                        icon = '🍭'; sign = `-${item.amount} ₽`; colorClass = 'text-rose-500';
+                    } else {
+                        icon = '🎯'; sign = `-${item.amount} ₽`; colorClass = 'text-amber-600';
+                    }
+                    let goalName = '';
+                    if (item.goalId) {
+                        const goal = state.goals.find(g => g.id === item.goalId);
+                        if (goal) goalName = ` → ${escapeHtml(goal.name)}`;
+                    }
+                    return `
+                        <div onclick="openEditTransactionModal('${item.id}')" class="history-item flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm active:scale-95 cursor-pointer">
+                            <div class="flex items-center gap-2">
+                                <span class="text-2xl">${icon}</span>
+                                <div>
+                                    <div class="font-bold text-slate-700 text-sm">${escapeHtml(item.note)}${goalName}</div>
+                                    <div class="text-[10px] text-gray-400">${item.date}</div>
+                                </div>
+                            </div>
+                            <span class="font-bold ${colorClass}">${sign}</span>
+                        </div>
+                    `;
+                }).join('');
             }
-
-            modal.classList.replace('hidden', 'flex');
-            setTimeout(() => {
-                modalContainer.classList.remove('scale-95', 'opacity-0');
-            }, 10);
+            
+            localStorage.setItem('money_express_v5', JSON.stringify({ history: state.history, goals: state.goals }));
         }
 
-        // Функция теперь гарантированно работает для всех
-        window.openEditModal = function(id) {
+        // ---------- ТРАНЗАКЦИИ ----------
+        let currentTransactionType = 'income';
+        let editingTransactionId = null;
+        
+        function openTransactionModal(type) {
             playClickSound();
+            currentTransactionType = type;
+            editingTransactionId = null;
+            document.getElementById('transAmount').value = '';
+            document.getElementById('transNote').value = '';
+            document.getElementById('transDeleteBtn').classList.add('hidden');
+            document.getElementById('transModalTitle').innerText = type === 'income' ? '💰 Пополнение депо' : '🍭 Расход';
+            const btn = document.getElementById('transSubmitBtn');
+            btn.className = type === 'income' ? 'custom-btn bg-emerald-500 text-white py-4 rounded-2xl text-xl font-bold uppercase' : 'custom-btn bg-rose-500 text-white py-4 rounded-2xl text-xl font-bold uppercase';
+            btn.innerText = 'Добавить';
+            const modal = document.getElementById('transactionModal');
+            const container = document.getElementById('transactionModalContainer');
+            modal.classList.replace('hidden', 'flex');
+            setTimeout(() => { container.classList.remove('scale-95', 'opacity-0'); }, 10);
+        }
+        
+        function openEditTransactionModal(id) {
             const item = state.history.find(t => t.id === id);
             if (!item) return;
-
-            state.editingId = id;
-            state.modalType = item.type;
-
-            document.getElementById('modal-title').innerText = 'Чиним вагон 🛠️';
-            document.getElementById('amount-input').value = item.amount;
-            document.getElementById('note-input').value = item.note;
-            
-            submitBtn.innerText = 'Сохранить';
-            submitBtn.className = 'custom-btn bg-blue-500 text-white py-4 rounded-2xl text-xl font-bold uppercase';
-            deleteBtn.classList.remove('hidden');
-
+            playClickSound();
+            editingTransactionId = id;
+            currentTransactionType = item.type;
+            document.getElementById('transAmount').value = item.amount;
+            document.getElementById('transNote').value = item.note;
+            document.getElementById('transDeleteBtn').classList.remove('hidden');
+            document.getElementById('transModalTitle').innerText = '🛠️ Редактировать запись';
+            const btn = document.getElementById('transSubmitBtn');
+            btn.className = 'custom-btn bg-blue-500 text-white py-4 rounded-2xl text-xl font-bold uppercase';
+            btn.innerText = 'Сохранить';
+            const modal = document.getElementById('transactionModal');
+            const container = document.getElementById('transactionModalContainer');
             modal.classList.replace('hidden', 'flex');
-            setTimeout(() => {
-                modalContainer.classList.remove('scale-95', 'opacity-0');
-            }, 10);
-        };
-
-        function closeModal() {
-            modalContainer.classList.add('scale-95', 'opacity-0');
-            setTimeout(() => {
-                modal.classList.replace('flex', 'hidden');
-            }, 200);
+            setTimeout(() => { container.classList.remove('scale-95', 'opacity-0'); }, 10);
         }
-
+        
+        function closeTransactionModal() {
+            const container = document.getElementById('transactionModalContainer');
+            container.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => { document.getElementById('transactionModal').classList.replace('flex', 'hidden'); }, 200);
+        }
+        
         function saveTransaction() {
-            const amount = parseInt(document.getElementById('amount-input').value);
-            const note = document.getElementById('note-input').value || 'Без названия';
-
-            if (!amount || amount <= 0) return;
-
-            if (state.editingId) {
-                const index = state.history.findIndex(t => t.id === state.editingId);
-                if (index !== -1) {
-                    state.history[index].amount = amount;
-                    state.history[index].note = note;
+            const amount = parseInt(document.getElementById('transAmount').value);
+            const note = document.getElementById('transNote').value.trim() || (currentTransactionType === 'income' ? 'Доход' : 'Расход');
+            if (!amount || amount <= 0) { alert('Введи сумму больше 0'); return; }
+            const now = new Date();
+            const dateStr = `${now.getDate()}.${now.getMonth()+1} в ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`;
+            if (editingTransactionId) {
+                const idx = state.history.findIndex(t => t.id === editingTransactionId);
+                if (idx !== -1) {
+                    state.history[idx].amount = amount;
+                    state.history[idx].note = note;
                 }
             } else {
-                const now = new Date();
-                const time = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
-                const date = `${now.getDate()}.${now.getMonth()+1}`;
-                
                 state.history.push({
-                    id: 'train-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-                    type: state.modalType,
+                    id: Date.now() + '-' + Math.random().toString(36).substr(2, 6),
+                    type: currentTransactionType,
                     amount: amount,
                     note: note,
-                    date: `${date} в ${time}`
+                    date: dateStr
                 });
                 makeHonk();
             }
-
             updateUI();
-            closeModal();
+            closeTransactionModal();
         }
-
+        
         function deleteTransaction() {
-            if (!state.editingId) return;
-            state.history = state.history.filter(t => t.id !== state.editingId);
+            if (!editingTransactionId) return;
+            state.history = state.history.filter(t => t.id !== editingTransactionId);
             playClickSound();
             updateUI();
-            closeModal();
+            closeTransactionModal();
         }
-
+        
+        // ---------- ЦЕЛИ ----------
+        let editingGoalId = null;
+        
+        function openGoalCreatorModal() {
+            playClickSound();
+            editingGoalId = null;
+            document.getElementById('goalEditName').value = '';
+            document.getElementById('goalEditTarget').value = '';
+            document.getElementById('goalEditorTitle').innerText = '✨ Новая цель';
+            document.getElementById('goalEditorDeleteBtn').classList.add('hidden');
+            const modal = document.getElementById('goalEditorModal');
+            const container = document.getElementById('goalEditorContainer');
+            modal.classList.replace('hidden', 'flex');
+            setTimeout(() => { container.classList.remove('scale-95', 'opacity-0'); }, 10);
+        }
+        
+        function openGoalEditorModal(goalId) {
+            const goal = state.goals.find(g => g.id === goalId);
+            if (!goal) return;
+            playClickSound();
+            editingGoalId = goalId;
+            document.getElementById('goalEditName').value = goal.name;
+            document.getElementById('goalEditTarget').value = goal.targetAmount;
+            document.getElementById('goalEditorTitle').innerText = '✏️ Редактировать цель';
+            document.getElementById('goalEditorDeleteBtn').classList.remove('hidden');
+            const modal = document.getElementById('goalEditorModal');
+            const container = document.getElementById('goalEditorContainer');
+            modal.classList.replace('hidden', 'flex');
+            setTimeout(() => { container.classList.remove('scale-95', 'opacity-0'); }, 10);
+        }
+        
+        function closeGoalEditorModal() {
+            const container = document.getElementById('goalEditorContainer');
+            container.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => { document.getElementById('goalEditorModal').classList.replace('flex', 'hidden'); }, 200);
+        }
+        
+        function saveGoalFromEditor() {
+            const name = document.getElementById('goalEditName').value.trim();
+            const target = parseInt(document.getElementById('goalEditTarget').value);
+            if (!name) { alert('Введи название цели'); return; }
+            if (!target || target <= 0) { alert('Целевая сумма должна быть больше 0'); return; }
+            if (editingGoalId) {
+                const goal = state.goals.find(g => g.id === editingGoalId);
+                if (goal) {
+                    goal.name = name;
+                    goal.targetAmount = target;
+                }
+            } else {
+                state.goals.push({
+                    id: Date.now() + '-' + Math.random().toString(36).substr(2, 6),
+                    name: name,
+                    targetAmount: target,
+                    savedAmount: 0
+                });
+            }
+            updateUI();
+            closeGoalEditorModal();
+            playClickSound();
+            makeHonk();
+        }
+        
+        function deleteGoalFromEditor() {
+            if (!editingGoalId) return;
+            state.history = state.history.filter(t => !(t.type === 'goal_deposit' && t.goalId === editingGoalId));
+            state.goals = state.goals.filter(g => g.id !== editingGoalId);
+            updateUI();
+            closeGoalEditorModal();
+            playClickSound();
+        }
+        
+        // ---------- ПОПОЛНЕНИЕ ЦЕЛИ ----------
+        let currentDepositGoalId = null;
+        
+        function openGoalDepositModal(goalId) {
+            currentDepositGoalId = goalId;
+            const goal = state.goals.find(g => g.id === goalId);
+            if (!goal) return;
+            playClickSound();
+            document.getElementById('depositGoalName').innerText = goal.name;
+            document.getElementById('depositAmount').value = '';
+            document.getElementById('depositNote').value = '';
+            const modal = document.getElementById('goalDepositModal');
+            const container = document.getElementById('goalDepositContainer');
+            modal.classList.replace('hidden', 'flex');
+            setTimeout(() => { container.classList.remove('scale-95', 'opacity-0'); }, 10);
+            
+            const maxBtn = document.getElementById('maxDepositBtn');
+            const balance = computeBalance();
+            maxBtn.onclick = () => {
+                if (balance <= 0) {
+                    alert('В депо нет свободных денег');
+                    return;
+                }
+                document.getElementById('depositAmount').value = balance;
+            };
+        }
+        
+        function closeGoalDepositModal() {
+            const container = document.getElementById('goalDepositContainer');
+            container.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => { document.getElementById('goalDepositModal').classList.replace('flex', 'hidden'); }, 200);
+        }
+        
+        function saveGoalDeposit() {
+            const amount = parseInt(document.getElementById('depositAmount').value);
+            if (!amount || amount <= 0) { alert('Введи сумму больше нуля'); return; }
+            const balance = computeBalance();
+            if (amount > balance) { alert(`Не хватает средств! Доступно: ${balance} ₽`); return; }
+            const note = document.getElementById('depositNote').value.trim() || 'Пополнение цели';
+            const now = new Date();
+            const dateStr = `${now.getDate()}.${now.getMonth()+1} в ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`;
+            state.history.push({
+                id: Date.now() + '-' + Math.random().toString(36).substr(2, 6),
+                type: 'goal_deposit',
+                amount: amount,
+                note: note,
+                date: dateStr,
+                goalId: currentDepositGoalId
+            });
+            updateUI();
+            makeHonk();
+            closeGoalDepositModal();
+        }
+        
         function makeHonk() {
             playHonkSound();
             const train = document.getElementById('train');
@@ -387,7 +582,23 @@
             train.classList.add('vibrate');
             setTimeout(() => train.classList.remove('vibrate'), 400);
         }
-
+        
+        // Глобальные функции
+        window.openTransactionModal = openTransactionModal;
+        window.openEditTransactionModal = openEditTransactionModal;
+        window.saveTransaction = saveTransaction;
+        window.deleteTransaction = deleteTransaction;
+        window.closeTransactionModal = closeTransactionModal;
+        window.openGoalCreatorModal = openGoalCreatorModal;
+        window.openGoalEditorModal = openGoalEditorModal;
+        window.closeGoalEditorModal = closeGoalEditorModal;
+        window.saveGoalFromEditor = saveGoalFromEditor;
+        window.deleteGoalFromEditor = deleteGoalFromEditor;
+        window.openGoalDepositModal = openGoalDepositModal;
+        window.closeGoalDepositModal = closeGoalDepositModal;
+        window.saveGoalDeposit = saveGoalDeposit;
+        window.makeHonk = makeHonk;
+        
         updateUI();
     </script>
 </body>
